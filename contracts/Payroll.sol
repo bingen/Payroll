@@ -189,8 +189,12 @@ contract Payroll {
         LogFund(msg.sender, address(0), msg.value, this.balance, "");
     }
 
-    function scapeHatch() public ownerOnly {
-        // TODO
+    /**
+     * @dev Implement escape hatch mechanism. Avoids locked in contract forever
+     * @notice Implement escape hatch mechanism. Avoids locked in contract forever
+     */
+    function escapeHatch() public ownerOnly {
+        selfdestruct(employer); // send funds to organizer
     }
 
     /**
@@ -302,14 +306,6 @@ contract Payroll {
     function setUsdTokenAddress(address token) public ownerOnly {
         usdToken = token;
         exchangeRates[token] = 100; // 2 decimals for cents
-    }
-
-    /**
-     * @dev Avoids locked in contract forever
-     * @notice Avoids locked in contract forever
-     */
-    function destroy() public ownerOnly {
-        selfdestruct(employer); // send funds to organizer
     }
 
     /* EMPLOYEE ONLY */

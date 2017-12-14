@@ -63,10 +63,10 @@ contract TestPayrollNonOwner {
         r = throwProxy.execute.gas(200000)();
         Assert.isFalse(r, "Should be false, as it should throw because of non-owner calling  function");
 
-        /* scapeHatch */
-        Payroll(address(throwProxy)).scapeHatch();
+        /* escapeHatch */
+        Payroll(address(throwProxy)).escapeHatch();
         r = throwProxy.execute.gas(200000)();
-        Assert.isFalse(r, "Should be false, as it should throw because of non-owner calling scapeHatch function");
+        Assert.isFalse(r, "Should be false, as it should throw because of non-owner calling escapeHatch function");
 
         /* getEmployeeCount */
         Payroll(address(throwProxy)).getEmployeeCount();
@@ -93,10 +93,6 @@ contract TestPayrollNonOwner {
         r = throwProxy.execute.gas(200000)();
         Assert.isFalse(r, "Should be false, as it should throw because of non-owner calling setUsdTokenAddress function");
 
-        /* destroy */
-        Payroll(address(throwProxy)).destroy();
-        r = throwProxy.execute.gas(200000)();
-        Assert.isFalse(r, "Should be false, as it should throw because of non-owner calling destroy function");
     }
 
 }
