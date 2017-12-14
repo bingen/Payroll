@@ -64,9 +64,7 @@ contract TestPayrollPay {
         // Add funds to be able to pay
         Assert.isAbove(pr.employer().balance, 50, "Not enough balance!");
         pr.addFunds.value(10*10**18).gas(200000)();
-        throwProxy.transfer(10**18);
         Assert.isAbove(pr.balance, 9*10**18, "Not enough balance for PR!");
-        Assert.isAbove(throwProxy.balance, 9*10**17, "Not enough balance for proxy!");
 
         Payroll(address(throwProxy)).payday();
         r = throwProxy.execute.gas(200000)();
@@ -89,9 +87,7 @@ contract TestPayrollPay {
         // Add funds to be able to pay
         Assert.isAbove(prGlobal.employer().balance, 50, "Not enough balance!");
         prGlobal.addFunds.value(10*10**18).gas(200000)();
-        throwProxyGlobal.transfer(10**18);
         Assert.isAbove(prGlobal.balance, 9*10**18, "Not enough balance for PR!");
-        Assert.isAbove(throwProxyGlobal.balance, 9*10**17, "Not enough balance for proxy!");
 
         Payroll(address(throwProxyGlobal)).payday();
         r = throwProxyGlobal.execute.gas(200000)();
