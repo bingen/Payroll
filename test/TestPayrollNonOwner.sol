@@ -89,9 +89,9 @@ contract TestPayrollNonOwner {
         Assert.isFalse(r, "Should be false, as it should throw because of non-owner calling calculatePayrollRunway function");
 
         /* setOracle */
-        Payroll(address(throwProxy)).setUsdTokenAddress(randomAddress);
+        Payroll(address(throwProxy)).setEurTokenAddress(randomAddress);
         r = throwProxy.execute.gas(200000)();
-        Assert.isFalse(r, "Should be false, as it should throw because of non-owner calling setUsdTokenAddress function");
+        Assert.isFalse(r, "Should be false, as it should throw because of non-owner calling setEurTokenAddress function");
 
     }
 

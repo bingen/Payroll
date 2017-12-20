@@ -15,3 +15,11 @@ and then run:
 ```
 truffle test
 ```
+
+### Euro version
+
+For the Euro version, checkout `euro` branch first:
+
+```
+git checkout euro
+```

@@ -8,7 +8,7 @@ import "./lib/SafeMath.sol";
 
 /**
  * @title Payroll in multiple currencies
- * @notice For the sake of simplicity lets asume USD is a ERC20 token
+ * @notice For the sake of simplicity lets asume EUR is a ERC20 token
  * Also lets asume we can 100% trust the exchange rate oracle
  * It would simplify it to consider ETH an ERC20 token too,
  * like WETH.
@@ -21,7 +21,7 @@ contract Payroll {
         mapping(address => bool) allowedTokens; // Could it be defined globally?
         address[] allowedTokensArray;
         mapping(address => uint256) allocation;
-        uint256 yearlyUSDSalary;
+        uint256 yearlyEURSalary;
         uint lastAllocation;
         uint lastPayroll;
         string name;
@@ -34,7 +34,7 @@ contract Payroll {
     uint256 private yearlyTotalPayroll;
 
     address public oracle;
-    address public usdToken;
+    address public eurToken;
     mapping(address => uint256) private exchangeRates;
 
     address public employer;
@@ -86,17 +86,17 @@ contract Payroll {
      * @notice It actually calls function addEmployeeWithName
      * @param accountAddress Employer's address to receive Payroll
      * @param allowedTokens Array of tokens allowed for payment
-     * @param initialYearlyUSDSalary Employee's salary
+     * @param initialYearlyEURSalary Employee's salary
      */
     function addEmployee(
         address accountAddress,
         address[] allowedTokens,
-        uint256 initialYearlyUSDSalary
+        uint256 initialYearlyEURSalary
     )
         public
         ownerOnly
     {
-        addEmployeeWithName(accountAddress, allowedTokens, initialYearlyUSDSalary, "");
+        addEmployeeWithName(accountAddress, allowedTokens, initialYearlyEURSalary, "");
     }
 
     /**
@@ -106,13 +106,13 @@ contract Payroll {
                Updates also global Payroll salary sum.
      * @param accountAddress Employer's address to receive Payroll
      * @param allowedTokens Array of tokens allowed for payment
-     * @param initialYearlyUSDSalary Employee's salary
+     * @param initialYearlyEURSalary Employee's salary
      * @param name Employee's name
      */
     function addEmployeeWithName(
         address accountAddress,
         address[] allowedTokens,
-        uint256 initialYearlyUSDSalary,
+        uint256 initialYearlyEURSalary,
         string name
     )
         public
@@ -125,7 +125,7 @@ contract Payroll {
         employees[employeeId] = Employee({
             accountAddress: accountAddress,
             allowedTokensArray: allowedTokens,
-            yearlyUSDSalary: initialYearlyUSDSalary,
+            yearlyEURSalary: initialYearlyEURSalary,
             lastAllocation: 0,
             lastPayroll: 0,
             name: name
@@ -144,7 +144,7 @@ contract Payroll {
         // Ids mapping
         employeeIds[accountAddress] = employeeId;
         // update global variables
-        yearlyTotalPayroll = yearlyTotalPayroll.add(initialYearlyUSDSalary);
+        yearlyTotalPayroll = yearlyTotalPayroll.add(initialYearlyEURSalary);
         numEmployees++;
         nextEmployee++;
     }
@@ -153,16 +153,16 @@ contract Payroll {
      * @dev Set employee's annual salary
      * @notice Updates also global Payroll salary sum
      * @param employeeId Employee's identifier
-     * @param yearlyUSDSalary Employee's new salary
+     * @param yearlyEURSalary Employee's new salary
      */
-    function setEmployeeSalary(uint256 employeeId, uint256 yearlyUSDSalary) public ownerOnly {
+    function setEmployeeSalary(uint256 employeeId, uint256 yearlyEURSalary) public ownerOnly {
         /* check that employee exist */
         if (employeeIds[employees[employeeId].accountAddress] == 0)
             return;
 
-        yearlyTotalPayroll = yearlyTotalPayroll.sub(employees[employeeId].yearlyUSDSalary);
-        employees[employeeId].yearlyUSDSalary = yearlyUSDSalary;
-        yearlyTotalPayroll = yearlyTotalPayroll.add(yearlyUSDSalary);
+        yearlyTotalPayroll = yearlyTotalPayroll.sub(employees[employeeId].yearlyEURSalary);
+        employees[employeeId].yearlyEURSalary = yearlyEURSalary;
+        yearlyTotalPayroll = yearlyTotalPayroll.add(yearlyEURSalary);
     }
 
     /**
@@ -175,7 +175,7 @@ contract Payroll {
         if (employeeIds[employees[employeeId].accountAddress] == 0)
             return;
 
-        yearlyTotalPayroll = yearlyTotalPayroll.sub(employees[employeeId].yearlyUSDSalary);
+        yearlyTotalPayroll = yearlyTotalPayroll.sub(employees[employeeId].yearlyEURSalary);
         delete employeeIds[employees[employeeId].accountAddress];
         delete employees[employeeId];
         numEmployees--;
@@ -251,7 +251,7 @@ contract Payroll {
         ownerOnly
         returns(
             address accountAddress,
-            uint256 yearlyUSDSalary,
+            uint256 yearlyEURSalary,
             string name,
             address[] allowedTokens,
             uint lastAllocation,
@@ -261,7 +261,7 @@ contract Payroll {
         var employee = employees[employeeId];
 
         accountAddress = employee.accountAddress;
-        yearlyUSDSalary = employee.yearlyUSDSalary;
+        yearlyEURSalary = employee.yearlyEURSalary;
         name = employee.name;
         allowedTokens = employee.allowedTokensArray;
         lastAllocation = employee.lastAllocation;
@@ -278,8 +278,8 @@ contract Payroll {
     }
 
     /**
-     * @dev Monthly USD amount spent in salaries
-     * @notice Monthly USD amount spent in salaries
+     * @dev Monthly EUR amount spent in salaries
+     * @notice Monthly EUR amount spent in salaries
      * @return Integer with the monthly amount
      */
     function calculatePayrollBurnrate() public constant ownerOnly returns(uint256 payrollBurnrate) {
@@ -299,12 +299,12 @@ contract Payroll {
     }
 
     /**
-     * @dev Set USD Token address
-     * @notice USD Token is a special one, so we can not allow its exchange rate to be changed
-     * @param token USD Token's address
+     * @dev Set EUR Token address
+     * @notice EUR Token is a special one, so we can not allow its exchange rate to be changed
+     * @param token EUR Token's address
      */
-    function setUsdTokenAddress(address token) public ownerOnly {
-        usdToken = token;
+    function setEurTokenAddress(address token) public ownerOnly {
+        eurToken = token;
         exchangeRates[token] = 100; // 2 decimals for cents
     }
 
@@ -369,7 +369,7 @@ contract Payroll {
                 continue;
             require(checkExchangeRate(token));
             uint256 tokenAmount =
-                employee.yearlyUSDSalary.mul(employee.allocation[token]).mul(exchangeRates[token]) / 1200;
+                employee.yearlyEURSalary.mul(employee.allocation[token]).mul(exchangeRates[token]) / 1200;
             if (token == address(0)) { // Send ETH
                 msg.sender.transfer(tokenAmount);
             } else { // Send Tokens
@@ -413,25 +413,25 @@ contract Payroll {
 
     /* ORACLE ONLY */
     /**
-     * @dev Set the USD exchange rate for a token. Uses decimals from token
-     * @notice Sets the USD exchange rate for a token
+     * @dev Set the EUR exchange rate for a token. Uses decimals from token
+     * @notice Sets the EUR exchange rate for a token
      * @param token The token address
-     * @param usdExchangeRate The exchange rate
+     * @param eurExchangeRate The exchange rate
      */
     // solhint-disable-next-line func-order
-    function setExchangeRate(address token, uint256 usdExchangeRate) external oracleOnly {
-        if (token == address(0) || token != usdToken) {
-            exchangeRates[token] = usdExchangeRate;
-            LogSetExchangeRate(token, usdExchangeRate);
+    function setExchangeRate(address token, uint256 eurExchangeRate) external oracleOnly {
+        if (token == address(0) || token != eurToken) {
+            exchangeRates[token] = eurExchangeRate;
+            LogSetExchangeRate(token, eurExchangeRate);
         }
     }
 
     /* Aux functions */
     /**
-     * @dev Get the USD exchange rate of a Token
-     * @notice Get the USD exchange rate of a Token
+     * @dev Get the EUR exchange rate of a Token
+     * @notice Get the EUR exchange rate of a Token
      * @param token The token address
-     * @return usdExchangeRate The exchange rate
+     * @return eurExchangeRate The exchange rate
      */
     function getExchangeRate(address token) public constant returns(uint256 rate) {
         rate = exchangeRates[token];

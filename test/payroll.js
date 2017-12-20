@@ -23,7 +23,7 @@ contract('Payroll', function(accounts) {
   var salary2_2 = 125000;
   var salary2 = salary2_1;
   var erc20Factory;
-  var usdToken;
+  var eurToken;
   var erc20Token1;
   var erc20Token2;
   var erc223Factory;
@@ -120,19 +120,19 @@ contract('Payroll', function(accounts) {
     }
     return Payroll.deployed().then(function(instance) {
       payroll = instance;
-      // USD Token
+      // EUR Token
       return ERC20Factory.deployed();
     }).then(function(instance) {
       erc20Factory = instance;
       return deployErc20Token();
     }).then(function(result) {
-      usdToken = result;
-      //console.log("USD Token: " + usdToken.address);
-      return payroll.setUsdTokenAddress(usdToken.address);
+      eurToken = result;
+      //console.log("EUR Token: " + eurToken.address);
+      return payroll.setEurTokenAddress(eurToken.address);
     }).then(function() {
-      return payroll.usdToken.call();
+      return payroll.eurToken.call();
     }).then(function(token) {
-      assert.equal(token.valueOf(), usdToken.address, "USD Token address is wrong");
+      assert.equal(token.valueOf(), eurToken.address, "EUR Token address is wrong");
       // ERC 20 Tokens
       return deployErc20Token();
     }).then(function(result) {
@@ -158,12 +158,12 @@ contract('Payroll', function(accounts) {
       return payroll.getExchangeRate("0x0");
     }).then(function(result) {
       assert.equal(result.toString(), etherExchangeRate.toString(), "Exchange rate for Ether doesn't match!");
-      return oracle.setRate(usdToken.address, 999);
+      return oracle.setRate(eurToken.address, 999);
     }).then(function() {
-      return payroll.getExchangeRate(usdToken.address);
+      return payroll.getExchangeRate(eurToken.address);
     }).then(function(result) {
-      // USD Token rate should be always 100
-      assert.equal(result.valueOf(), 100, "Exchange rate for USD Token doesn't match!");
+      // EUR Token rate should be always 100
+      assert.equal(result.valueOf(), 100, "Exchange rate for EUR Token doesn't match!");
       return setAndCheckRate(erc20Token1, erc20Token1ExchangeRate, "ERC20 Token 1");
     }).then(function() {
       return setAndCheckRate(erc20Token2, erc20Token2ExchangeRate, "ERC 20 Token 2");
@@ -181,7 +181,7 @@ contract('Payroll', function(accounts) {
     var employeeId = 1;
     return Payroll.deployed().then(function(instance) {
       payroll = instance;
-      return payroll.addEmployee(employee1_1, [usdToken.address, erc20Token1.address, erc20Token2.address, erc223Token1.address, erc223Token2.address], salary1_1);
+      return payroll.addEmployee(employee1_1, [eurToken.address, erc20Token1.address, erc20Token2.address, erc223Token1.address, erc223Token2.address], salary1_1);
     }).then(function() {
       salary1 = salary1_1;
       return payroll.getEmployeeCount.call();
@@ -200,7 +200,7 @@ contract('Payroll', function(accounts) {
     var employeeId = 2;
     return Payroll.deployed().then(function(instance) {
       payroll = instance;
-      return payroll.addEmployeeWithName(employee2, [usdToken.address, erc20Token1.address, erc223Token1.address], salary2_1, name);
+      return payroll.addEmployeeWithName(employee2, [eurToken.address, erc20Token1.address, erc223Token1.address], salary2_1, name);
     }).then(function() {
       salary2 = salary2_1;
       return payroll.getEmployeeCount.call();
@@ -232,7 +232,7 @@ contract('Payroll', function(accounts) {
     var yearlyTotalPayroll;
     return Payroll.deployed().then(function(instance) {
       payroll = instance;
-      return payroll.addEmployeeWithName(employee2, [usdToken.address, erc20Token1.address, erc223Token1.address], salary2_2, name);
+      return payroll.addEmployeeWithName(employee2, [eurToken.address, erc20Token1.address, erc223Token1.address], salary2_2, name);
     }).then(function(transaction) {
       //console.log(transaction);
       return payroll.getEmployeeCount.call();
@@ -338,16 +338,16 @@ contract('Payroll', function(accounts) {
   });
 
   it("Test payday, WITH Token allocation", function() {
-    var usdTokenAllocation = 50;
+    var eurTokenAllocation = 50;
     var erc20Token1Allocation = 20;
     var erc223Token1Allocation = 15;
-    var ethAllocation = 100 - usdTokenAllocation - erc20Token1Allocation - erc223Token1Allocation;
+    var ethAllocation = 100 - eurTokenAllocation - erc20Token1Allocation - erc223Token1Allocation;
     var initialEthPayroll;
-    var initialUsdTokenPayroll;
+    var initialEurTokenPayroll;
     var initialErc20Token1Payroll;
     var initialErc223Token1Payroll;
     var initialEthEmployee2;
-    var initialUsdTokenEmployee2;
+    var initialEurTokenEmployee2;
     var initialErc20Token1Employee2;
     var initialErc223Token1Employee2;
 
@@ -355,17 +355,17 @@ contract('Payroll', function(accounts) {
       initialEthPayroll = web3.eth.getBalance(payroll.address);
       initialEthEmployee2 = web3.eth.getBalance(employee2);
       // Token initial balances
-      return usdToken.balanceOf.call(payroll.address).then(function(result) {
-        initialUsdTokenPayroll = result;
+      return eurToken.balanceOf.call(payroll.address).then(function(result) {
+        initialEurTokenPayroll = result;
         return erc20Token1.balanceOf.call(payroll.address);
       }).then(function(result) {
         initialErc20Token1Payroll = result;
         return erc223Token1.balanceOf.call(payroll.address);
       }).then(function(result) {
         initialErc223Token1Payroll = result;
-        return usdToken.balanceOf.call(employee2);
+        return eurToken.balanceOf.call(employee2);
       }).then(function(result) {
-        initialUsdTokenEmployee2 = result;
+        initialEurTokenEmployee2 = result;
         return erc20Token1.balanceOf.call(employee2);
       }).then(function(result) {
         initialErc20Token1Employee2 = result;
@@ -407,7 +407,7 @@ contract('Payroll', function(accounts) {
       assert.equal(newEthPayroll.toString(), expectedPayroll.toString(), "Payroll Eth Balance doesn't match");
       assert.equal(newEthEmployee2.toString(), expectedEmployee2.toString(), "Employee Eth Balance doesn't match");
       // Check Tokens
-      return checkTokenBalances(usdToken, salary2, initialUsdTokenPayroll, initialUsdTokenEmployee2, 100, usdTokenAllocation, "USD").then(function(result) {
+      return checkTokenBalances(eurToken, salary2, initialEurTokenPayroll, initialEurTokenEmployee2, 100, eurTokenAllocation, "EUR").then(function(result) {
         return checkTokenBalances(erc20Token1, salary2, initialErc20Token1Payroll, initialErc20Token1Employee2, erc20Token1ExchangeRate, erc20Token1Allocation, "ERC20 1");
       }).then(function(result) {
         return checkTokenBalances(erc223Token1, salary2, initialErc223Token1Payroll, initialErc223Token1Employee2, erc223Token1ExchangeRate, erc223Token1Allocation, "ERC 223 1");
@@ -416,7 +416,7 @@ contract('Payroll', function(accounts) {
     return Payroll.deployed().then(function(instance) {
       payroll = instance;
       // determine allocation
-      return payroll.determineAllocation([usdToken.address, erc20Token1.address, erc223Token1.address], [usdTokenAllocation, erc20Token1Allocation, erc223Token1Allocation], {from: employee2});
+      return payroll.determineAllocation([eurToken.address, erc20Token1.address, erc223Token1.address], [eurTokenAllocation, erc20Token1Allocation, erc223Token1Allocation], {from: employee2});
     }).then(function(transaction) {
       return setInitialBalances();
     }).then(function() {
@@ -440,11 +440,11 @@ contract('Payroll', function(accounts) {
       var time = 5 * 31 * 24 * 3600;
       web3.currentProvider.send({jsonrpc: "2.0", method: "evm_increaseTime", params: [time], id: 0});
     }).then(function(result) {
-      return payroll.determineAllocation([usdToken.address, erc20Token1.address, erc223Token1.address], [60, 15, 10], {from: employee2});
+      return payroll.determineAllocation([eurToken.address, erc20Token1.address, erc223Token1.address], [60, 15, 10], {from: employee2});
     }).then(function(result) {
-      return payroll.getAllocation(usdToken.address, {from: employee2});
+      return payroll.getAllocation(eurToken.address, {from: employee2});
     }).then(function(result) {
-      assert.equal(result.valueOf(), 60, "USD allocation doesn't match");
+      assert.equal(result.valueOf(), 60, "EUR allocation doesn't match");
       return payroll.getAllocation(erc20Token1.address, {from: employee2});
     }).then(function(result) {
       assert.equal(result.valueOf(), 15, "ERC 20 Token 1 allocation doesn't match");
